@@ -33,6 +33,33 @@ Makie.convert_arguments(P::Type{<:Errorbars}, x::AbstractVector{<:Measurement}, 
 Makie.convert_arguments(P::Type{<:Errorbars}, x::AbstractVector{<:Real}, y::AbstractVector{<:Measurement}) =
     Makie.convert_arguments(P, x, value.(y), uncertainty.(y))
 
+Makie.@recipe MeasurementErrorbars (x, y) begin
+    Makie.documented_attributes(Errorbars)...
+end
+
+function Makie.plot!(p::MeasurementErrorbars)
+    x = p.arg1
+    y = p.arg2
+    direction = p.direction[]
+
+    if direction == :x
+        Makie.errorbars!(p, p.attributes, x, y, x; direction = :x,)
+    elseif direction == :y
+        Makie.errorbars!(p, p.attributes, x, y, y; direction = :y,)
+    elseif direction == :both
+        Makie.errorbars!(p, p.attributes, x, y, x; direction = :x,)
+        Makie.errorbars!(p, p.attributes, x, y, y;direction = :y,)
+    else
+        throw(ArgumentError("Invalid direction: $direction. Accepted directions are :x, :y, or :both"))
+    end
+
+    return p
+end
+
+function Makie.errorbars(x::AbstractVector{<:Measurement}, y::AbstractVector{<:Measurement}; direction = :both,kwargs...,)
+    return measurementerrorbars(x, y; direction = direction, kwargs...)
+end
+
 # band
 Makie.convert_arguments(P::Type{<:Band}, x::AbstractVector{<:Measurement}, y::AbstractVector{<:Measurement}) =
     Makie.convert_arguments(P, value.(x), value.(y) - uncertainty.(y), value.(y) + uncertainty.(y))
